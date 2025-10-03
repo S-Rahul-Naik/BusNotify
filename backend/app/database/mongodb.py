@@ -118,6 +118,9 @@ class MongoDB:
 # Global MongoDB instance
 mongodb = MongoDB()
 
+# Alias for compatibility
+database_manager = mongodb
+
 # Database connection functions
 async def init_database():
     """Initialize database connection"""
