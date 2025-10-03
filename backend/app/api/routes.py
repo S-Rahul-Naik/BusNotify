@@ -3,7 +3,7 @@ API Routes configuration
 """
 
 from fastapi import APIRouter
-from app.api.endpoints import auth, routes, stops, trips, subscriptions, notifications, predictions
+from app.api.endpoints import auth, routes, stops, trips, subscriptions, notifications, predictions, websocket
 
 api_router = APIRouter()
 
@@ -15,3 +15,4 @@ api_router.include_router(trips.router, prefix="/trips", tags=["Trips"])
 api_router.include_router(subscriptions.router, prefix="/subscriptions", tags=["Subscriptions"])
 api_router.include_router(notifications.router, prefix="/notifications", tags=["Notifications"])
 api_router.include_router(predictions.router, prefix="/predictions", tags=["Predictions"])
+api_router.include_router(websocket.router, prefix="/websocket", tags=["WebSocket"])

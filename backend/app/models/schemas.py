@@ -8,6 +8,17 @@ from datetime import datetime, time
 from enum import Enum
 import uuid
 
+# Import WebSocket schemas for real-time communication
+try:
+    from app.websocket.schemas import (
+        TripUpdate, NotificationAlert, WebSocketMessage, RouteStatus,
+        SystemAlert, ConnectionStatus, SubscriptionRequest, SubscriptionResponse,
+        BusLocation, StopArrival, ServiceAlert, WebSocketStats
+    )
+except ImportError:
+    # Handle import error if websocket module is not available
+    pass
+
 class UserRole(str, Enum):
     """User roles in the system"""
     PASSENGER = "passenger"

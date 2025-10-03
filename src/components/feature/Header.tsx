@@ -13,7 +13,8 @@ export default function Header() {
     { name: 'Routes', path: '/routes', icon: 'ri-route-line' },
     { name: 'Live Tracking', path: '/live-tracking', icon: 'ri-map-line' },
     { name: 'Schedule', path: '/schedule', icon: 'ri-calendar-line' },
-    { name: 'Notifications', path: '/notifications', icon: 'ri-notification-line' }
+    { name: 'Notifications', path: '/notifications', icon: 'ri-notification-line' },
+    { name: 'Phase 4 AI', path: '/phase4', icon: 'ri-brain-line' }
   ];
 
   const isActivePath = (path: string) => {

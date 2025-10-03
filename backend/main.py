@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer
 from contextlib import asynccontextmanager
 import uvicorn
+import socketio
 from datetime import datetime
 import logging
 
@@ -16,6 +17,7 @@ from app.core.config import settings
 from app.api.routes import api_router
 from app.websocket.manager import websocket_manager
 from app.simulation.engine import simulation_engine
+from app.services.realtime import realtime_service
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -42,12 +44,20 @@ async def lifespan(app: FastAPI):
     await websocket_manager.start()
     logger.info("✅ WebSocket manager started")
     
+    # Start real-time service
+    await realtime_service.start()
+    logger.info("✅ Real-time service started")
+    
     logger.info("🚀 Bus Notification System is running!")
     
     yield
     
     # Shutdown
     logger.info("🛑 Shutting down Bus Notification System...")
+    
+    # Stop real-time service
+    await realtime_service.stop()
+    logger.info("✅ Real-time service stopped")
     
     # Stop simulation engine
     await simulation_engine.stop()
@@ -83,6 +93,10 @@ app.add_middleware(
 # Include API routes
 app.include_router(api_router, prefix="/api/v1")
 
+# Mount WebSocket app
+sio_app = socketio.ASGIApp(websocket_manager.sio, app)
+app.mount("/socket.io", sio_app)
+
 @app.get("/")
 async def root():
     """Health check endpoint"""
@@ -96,14 +110,24 @@ async def root():
 @app.get("/health")
 async def health_check():
     """Detailed health check"""
+    # Get real-time service stats
+    rt_stats = await realtime_service.get_realtime_stats()
+    ws_stats = websocket_manager.get_connection_stats()
+    
     return {
         "status": "healthy",
         "timestamp": datetime.utcnow().isoformat(),
         "services": {
             "database": "connected",
             "simulation": "running",
-            "websocket": "active",
+            "websocket": f"active ({ws_stats['total_connections']} connections)",
+            "realtime_service": rt_stats.get("service_status", "unknown"),
             "ml_engine": "ready"
+        },
+        "stats": {
+            "active_trips": rt_stats.get("active_trips", 0),
+            "websocket_connections": ws_stats["total_connections"],
+            "tracked_locations": rt_stats.get("tracked_locations", 0)
         }
     }
 

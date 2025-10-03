@@ -10,6 +10,7 @@ import Schedule from "../pages/schedule/page";
 import Notifications from "../pages/notifications/page";
 import SignIn from "../pages/signin/page";
 import SignUp from "../pages/signup/page";
+import Phase4Dashboard from "../pages/phase4/page";
 
 const routes: RouteObject[] = [
   {
@@ -47,6 +48,10 @@ const routes: RouteObject[] = [
   {
     path: "/admin",
     element: <AdminDashboard />,
+  },
+  {
+    path: "/phase4",
+    element: <Phase4Dashboard />,
   },
   {
     path: "*",

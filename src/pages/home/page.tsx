@@ -1,14 +1,12 @@
-
-import { useNavigate } from 'react-router-dom';
+﻿import { useNavigate } from 'react-router-dom';
 import Header from '../../components/feature/Header';
 
-export default function Home() {
+export default function HomePage() {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div className="min-h-screen">
       <Header />
-      
       {/* Hero Section */}
       <div className="relative overflow-hidden">
         <div 
@@ -51,6 +49,7 @@ export default function Home() {
           </div>
         </div>
       </div>
+
 
       {/* Features Section */}
       <div className="py-16 sm:py-20 lg:py-24 bg-white">
