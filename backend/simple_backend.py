@@ -200,14 +200,14 @@ async def health_check():
 
 if __name__ == "__main__":
     print("🚌 Starting BusNotify Development Server...")
-    print("📍 API will be available at: http://localhost:8000")
-    print("📖 API Documentation at: http://localhost:8000/docs")
+    print("📍 API will be available at: http://localhost:8001")
+    print("📖 API Documentation at: http://localhost:8001/docs")
     print("🔄 Auto-reload enabled for development")
     
     uvicorn.run(
         "simple_backend:app",
         host="0.0.0.0",
-        port=8000,
+        port=8001,
         reload=True,
         log_level="info"
     )

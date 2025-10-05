@@ -481,3 +481,6 @@ class DelayPredictionEngine:
 
 # Global ML engine instance
 ml_engine = DelayPredictionEngine()
+
+# Alias for backward compatibility
+prediction_engine = ml_engine

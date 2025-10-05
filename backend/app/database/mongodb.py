@@ -6,6 +6,7 @@ from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
 from pymongo import IndexModel, ASCENDING, DESCENDING, GEO2D
 from app.core.config import settings
 import logging
+from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -13,8 +14,9 @@ class MongoDB:
     """MongoDB connection manager"""
     
     def __init__(self):
-        self.client: AsyncIOMotorClient = None
-        self.database: AsyncIOMotorDatabase = None
+        self.client: Optional[AsyncIOMotorClient] = None
+        self.database: Optional[AsyncIOMotorDatabase] = None
+        self._connected = False
     
     async def connect(self):
         """Connect to MongoDB"""
@@ -24,6 +26,7 @@ class MongoDB:
             
             # Test connection
             await self.client.admin.command('ping')
+            self._connected = True
             logger.info(f"✅ Connected to MongoDB: {settings.DATABASE_NAME}")
             
             # Create indexes
@@ -31,13 +34,20 @@ class MongoDB:
             
         except Exception as e:
             logger.error(f"❌ Failed to connect to MongoDB: {e}")
+            self._connected = False
             raise
     
     async def disconnect(self):
         """Disconnect from MongoDB"""
         if self.client:
             self.client.close()
+            self._connected = False
             logger.info("✅ Disconnected from MongoDB")
+    
+    @property
+    def is_connected(self) -> bool:
+        """Check if connected to MongoDB"""
+        return self._connected
     
     async def _create_indexes(self):
         """Create database indexes for optimal performance"""

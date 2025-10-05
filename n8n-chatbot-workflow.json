@@ -1,0 +1,569 @@
+{
+  "name": "Readdy Agent - Bus Assistant",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "readdy",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-input",
+      "name": "Webhook Input",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300],
+      "webhookId": "readdy-agent"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json.type}}",
+              "operation": "equal",
+              "value2": "voice"
+            }
+          ]
+        }
+      },
+      "id": "input-type-switch",
+      "name": "Input Type Switch",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 1,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "resource": "audio",
+        "operation": "transcribe",
+        "audioInput": "={{$json.audio}}",
+        "model": "whisper-1",
+        "language": "en"
+      },
+      "id": "speech-to-text",
+      "name": "Speech to Text",
+      "type": "n8n-nodes-base.openAi",
+      "typeVersion": 1,
+      "position": [680, 200]
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineAll"
+      },
+      "id": "merge-inputs",
+      "name": "Merge Inputs",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 2,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "resource": "text",
+        "operation": "message",
+        "model": "gpt-4",
+        "messages": {
+          "values": [
+            {
+              "role": "system",
+              "content": "# BusTracker Voice Assistant\n\n## Identity & Business Background\n\nYou are Readdy, a smart voice assistant for BusTracker.\n\nBusiness: BusTracker is an intelligent bus delay prediction and passenger notification system that uses machine learning to provide real-time transit updates. Our software-only solution simulates bus movement without GPS hardware, predicting delays with 87% accuracy using historical data, weather, and traffic patterns. The platform features a React.js web interface with live bus tracking on interactive maps, WebSocket-powered real-time updates every 10 seconds, and multi-channel notifications via push, SMS, and email. Built with FastAPI backend, MongoDB database, and advanced ML algorithms, BusTracker serves commuters, transit authorities, and system administrators.\n\nServices: AI-powered bus delay prediction system with real-time tracking, smart notifications, route management dashboard, admin panel for transit authorities, WebSocket live updates, machine learning prediction algorithms, multi-channel alert system (push/SMS/email), interactive map visualization, user subscription management, emergency broadcast system, and comprehensive analytics for transit optimization.\n\n## Your Role\n- Provide accurate and friendly answers about BusTracker services\n- Help users with bus schedules, routes, and real-time information\n- Assist with subscription management and notifications\n- Offer a smooth and professional experience\n\n## Voice & Persona\n- Friendly, energetic, professional, and helpful\n- Patient and respectful with all users\n- Confident and knowledgeable about transit services\n- Speak clearly using contractions (\"we're\", \"you'll\", \"it's\")\n- Use polite transitions: \"Let me check that for you\", \"Just a moment while I look that up\"\n\n## Response Guidelines\n- Keep responses short, clear, and friendly\n- Ask only one question at a time\n- Always confirm key details clearly\n- Focus on bus-related queries and transit services\n- If unsure about specific information, offer to help find the answer\n\n## Common Queries You Handle\n- Bus schedules and real-time arrivals\n- Route information and directions\n- Delay predictions and service alerts\n- Subscription setup for notifications\n- Emergency transit updates\n- General BusTracker platform features"
+            },
+            {
+              "role": "user",
+              "content": "={{$json.message || $json.text}}"
+            }
+          ]
+        },
+        "temperature": 0.7,
+        "maxTokens": 500
+      },
+      "id": "llm-processing",
+      "name": "LLM Processing",
+      "type": "n8n-nodes-base.openAi",
+      "typeVersion": 1,
+      "position": [1120, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract intent and entities from the LLM response\nconst llmResponse = $input.first().json.choices[0].message.content;\n\n// Check if the user is asking about bus information\nconst busKeywords = ['bus', 'route', 'stop', 'schedule', 'delay', 'next bus', 'when', 'time'];\nconst needsBusData = busKeywords.some(keyword => \n  llmResponse.toLowerCase().includes(keyword) || \n  $json.message?.toLowerCase().includes(keyword)\n);\n\n// Extract location if mentioned\nconst locationMatch = ($json.message || '').match(/(?:to|from|near|at)\\s+([\\w\\s]+?)(?:\\s|$|\\?)/i);\nconst location = locationMatch ? locationMatch[1].trim() : null;\n\n// Extract route number if mentioned\nconst routeMatch = ($json.message || '').match(/route\\s+(\\d+|\\w+)/i);\nconst routeNumber = routeMatch ? routeMatch[1] : null;\n\nreturn {\n  llm_response: llmResponse,\n  needs_bus_data: needsBusData,\n  location: location,\n  route_number: routeNumber,\n  original_message: $json.message,\n  input_type: $json.type || 'text'\n};"
+      },
+      "id": "intent-extraction",
+      "name": "Intent Extraction",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1340, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{$json.needs_bus_data}}",
+              "operation": "equal",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "bus-data-needed",
+      "name": "Bus Data Needed?",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 1,
+      "position": [1560, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:8001/api/routes",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpBasicAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        }
+      },
+      "id": "get-bus-stops",
+      "name": "Get Bus Stops",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1780, 200]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:8001/api/buses",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpBasicAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        }
+      },
+      "id": "get-routes",
+      "name": "Get Routes",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1780, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:8001/api/predictions/route-42",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpBasicAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        }
+      },
+      "id": "get-live-trips",
+      "name": "Get Live Trips",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1780, 400]
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineAll"
+      },
+      "id": "merge-bus-data",
+      "name": "Merge Bus Data",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 2,
+      "position": [2000, 300]
+    },
+    {
+      "parameters": {
+        "resource": "text",
+        "operation": "message",
+        "model": "gpt-4",
+        "messages": {
+          "values": [
+            {
+              "role": "system",
+              "content": "You are Readdy, BusTracker's intelligent voice assistant. Using the provided real-time bus data, answer the user's question accurately and helpfully in a conversational way.\n\n## BusTracker Context\nBusTracker provides AI-powered bus delay prediction with 87% accuracy, real-time tracking, and multi-channel notifications. You help users with schedules, routes, delays, and service information.\n\n## Voice Guidelines\n- Keep responses short and friendly\n- Use natural contractions (\"you'll\", \"we're\", \"it's\")\n- Be patient and professional\n- Ask only one question at a time if clarification needed\n\n## Available Data\n- Bus Stops: {{$json[\"0\"][\"stops\"] || 'No stops data available'}}\n- Routes: {{$json[\"1\"][\"routes\"] || 'No routes data available'}}\n- Live Trips: {{$json[\"2\"][\"trips\"] || 'No live trips data available'}}\n\nUser Question: {{$json.original_message}}\n\nProvide helpful transit information based on this data. If the user asks about services beyond basic transit info, explain BusTracker's capabilities professionally."
+            },
+            {
+              "role": "user",
+              "content": "{{$json.original_message}}"
+            }
+          ]
+        },
+        "temperature": 0.7,
+        "maxTokens": 500
+      },
+      "id": "generate-response-with-data",
+      "name": "Generate Response with Data",
+      "type": "n8n-nodes-base.openAi",
+      "typeVersion": 1,
+      "position": [2220, 200]
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineAll"
+      },
+      "id": "merge-final-response",
+      "name": "Merge Final Response",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 2,
+      "position": [2440, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json.input_type}}",
+              "operation": "equal",
+              "value2": "voice"
+            }
+          ]
+        }
+      },
+      "id": "output-type-switch",
+      "name": "Output Type Switch",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 1,
+      "position": [2660, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://api.elevenlabs.io/v1/text-to-speech/pNInz6obpgDQGcFmaJgB",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "text",
+              "value": "={{$json.final_response || $json.llm_response}}"
+            },
+            {
+              "name": "model_id",
+              "value": "eleven_monolingual_v1"
+            },
+            {
+              "name": "voice_settings",
+              "value": "{\"stability\": 0.5, \"similarity_boost\": 0.5}"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        }
+      },
+      "id": "text-to-speech",
+      "name": "Text to Speech",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [2880, 200]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Prepare voice response\nconst audioData = $input.first().json;\nconst textResponse = $json.final_response || $json.llm_response;\n\nreturn {\n  type: 'voice',\n  text: textResponse,\n  audio: audioData,\n  timestamp: new Date().toISOString()\n};"
+      },
+      "id": "format-voice-response",
+      "name": "Format Voice Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [3100, 200]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Prepare text response\nconst textResponse = $json.final_response || $json.llm_response;\n\nreturn {\n  type: 'text',\n  message: textResponse,\n  timestamp: new Date().toISOString()\n};"
+      },
+      "id": "format-text-response",
+      "name": "Format Text Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2880, 400]
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineAll"
+      },
+      "id": "merge-output",
+      "name": "Merge Output",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 2,
+      "position": [3320, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{$json}}"
+      },
+      "id": "webhook-response",
+      "name": "Webhook Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [3540, 300]
+    }
+  ],
+  "connections": {
+    "Webhook Input": {
+      "main": [
+        [
+          {
+            "node": "Input Type Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Input Type Switch": {
+      "main": [
+        [
+          {
+            "node": "Speech to Text",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Merge Inputs",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Speech to Text": {
+      "main": [
+        [
+          {
+            "node": "Merge Inputs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Inputs": {
+      "main": [
+        [
+          {
+            "node": "LLM Processing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LLM Processing": {
+      "main": [
+        [
+          {
+            "node": "Intent Extraction",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Intent Extraction": {
+      "main": [
+        [
+          {
+            "node": "Bus Data Needed?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Bus Data Needed?": {
+      "main": [
+        [
+          {
+            "node": "Get Bus Stops",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get Routes",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get Live Trips",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Merge Final Response",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Get Bus Stops": {
+      "main": [
+        [
+          {
+            "node": "Merge Bus Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Routes": {
+      "main": [
+        [
+          {
+            "node": "Merge Bus Data",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Get Live Trips": {
+      "main": [
+        [
+          {
+            "node": "Merge Bus Data",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Merge Bus Data": {
+      "main": [
+        [
+          {
+            "node": "Generate Response with Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Response with Data": {
+      "main": [
+        [
+          {
+            "node": "Merge Final Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Final Response": {
+      "main": [
+        [
+          {
+            "node": "Output Type Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Output Type Switch": {
+      "main": [
+        [
+          {
+            "node": "Text to Speech",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Format Text Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Text to Speech": {
+      "main": [
+        [
+          {
+            "node": "Format Voice Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Voice Response": {
+      "main": [
+        [
+          {
+            "node": "Merge Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Text Response": {
+      "main": [
+        [
+          {
+            "node": "Merge Output",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge Output": {
+      "main": [
+        [
+          {
+            "node": "Webhook Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "createdAt": "2025-01-05T00:00:00.000Z",
+  "id": "readdy-agent-workflow",
+  "meta": {
+    "instanceId": "readdy-bus-assistant"
+  },
+  "tags": [
+    "chatbot",
+    "voice",
+    "bus",
+    "assistant"
+  ],
+  "updatedAt": "2025-01-05T00:00:00.000Z",
+  "versionId": "1.0.0"
+}

@@ -1,0 +1,54 @@
+{
+  "name": "Test Echo Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "test-echo",
+        "responseMode": "responseNode"
+      },
+      "id": "webhook-test",
+      "name": "Webhook Test",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        300,
+        300
+      ],
+      "webhookId": "test-echo"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": {
+          "status": "success",
+          "echo": "={{ $json.message || 'No message received' }}",
+          "timestamp": "={{ new Date().toISOString() }}",
+          "received_data": "={{ JSON.stringify($json) }}"
+        }
+      },
+      "id": "response-test",
+      "name": "Echo Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        500,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook Test": {
+      "main": [
+        [
+          {
+            "node": "Echo Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false
+}

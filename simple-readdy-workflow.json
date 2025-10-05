@@ -1,0 +1,96 @@
+{
+  "name": "Readdy Agent Simple",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "readdy-simple",
+        "responseMode": "responseNode"
+      },
+      "id": "webhook-simple",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [300, 300],
+      "webhookId": "readdy-simple"
+    },
+    {
+      "parameters": {
+        "model": "gpt-3.5-turbo",
+        "messages": {
+          "messageValues": [
+            {
+              "role": "system",
+              "message": "You are Readdy, the friendly BusTracker assistant. Help users with bus schedules, route information, and appointment booking. Keep responses conversational and helpful. Use the bus data when available."
+            },
+            {
+              "role": "user",
+              "message": "={{ $json.message || $json.body.message || 'Hello' }}"
+            }
+          ]
+        },
+        "options": {
+          "temperature": 0.7,
+          "maxTokens": 200
+        }
+      },
+      "id": "openai-simple",
+      "name": "OpenAI Chat",
+      "type": "@n8n/n8n-nodes-langchain.chatOpenAi",
+      "typeVersion": 1,
+      "position": [500, 300],
+      "credentials": {
+        "openAiApi": {
+          "id": "your-openai-credential-id",
+          "name": "OpenAI"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": {
+          "message": "={{ $json.response || $json.text || 'Hello! I am Readdy, your BusTracker assistant.' }}",
+          "type": "text",
+          "timestamp": "={{ new Date().toISOString() }}",
+          "agent": "readdy"
+        }
+      },
+      "id": "response-simple",
+      "name": "Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [700, 300]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "OpenAI Chat",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat": {
+      "main": [
+        [
+          {
+            "node": "Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "saveManualExecutions": true
+  }
+}

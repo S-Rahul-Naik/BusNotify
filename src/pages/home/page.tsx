@@ -1,11 +1,13 @@
 ﻿import { useNavigate } from 'react-router-dom';
-import Layout from '../../components/feature/Layout';
+import Header from '../../components/feature/Header';
+import ChatbotEnhanced from '../../components/feature/ChatbotEnhanced';
 
 export default function HomePage() {
   const navigate = useNavigate();
 
   return (
-    <Layout className="pb-16">
+    <div className="min-h-screen">
+      <Header />
       {/* Hero Section */}
       <div className="relative overflow-hidden">
         <div 
@@ -215,6 +217,52 @@ export default function HomePage() {
           </div>
         </div>
       </div>
-    </Layout>
+
+      {/* Footer */}
+      <footer className="bg-gray-900 text-white py-8 sm:py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
+            <div className="sm:col-span-2 lg:col-span-1">
+              <h3 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4" style={{ fontFamily: '"Pacifico", serif' }}>BusTracker</h3>
+              <p className="text-gray-400 text-sm sm:text-base">
+                Intelligent campus bus tracking and student notification system powered by machine learning.
+              </p>
+            </div>
+            <div>
+              <h4 className="font-semibold mb-3 sm:mb-4 text-sm sm:text-base">Features</h4>
+              <ul className="space-y-1 sm:space-y-2 text-gray-400 text-sm sm:text-base">
+                <li>Real-time Tracking</li>
+                <li>AI Predictions</li>
+                <li>Smart Notifications</li>
+                <li>Route Management</li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-semibold mb-3 sm:mb-4 text-sm sm:text-base">For Students</h4>
+              <ul className="space-y-1 sm:space-y-2 text-gray-400 text-sm sm:text-base">
+                <li>Live Bus Locations</li>
+                <li>Schedule Information</li>
+                <li>Delay Notifications</li>
+                <li>Route Planning</li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-semibold mb-3 sm:mb-4 text-sm sm:text-base">Contact</h4>
+              <ul className="space-y-1 sm:space-y-2 text-gray-400 text-sm sm:text-base">
+                <li>support@campusbustrack.edu</li>
+                <li>+1 (555) 123-4567</li>
+                <li>24/7 Student Support</li>
+              </ul>
+            </div>
+          </div>
+          <div className="border-t border-gray-800 mt-6 sm:mt-8 pt-6 sm:pt-8 text-center text-gray-400 text-sm sm:text-base">
+            <p>&copy; 2024 BusTracker. All rights reserved. | <a href="https://readdy.ai/?origin=logo" className="hover:text-white">Powered by Readdy</a></p>
+          </div>
+        </div>
+      </footer>
+
+      {/* Readdy Agent Chatbot */}
+      <ChatbotEnhanced />
+    </div>
   );
 }

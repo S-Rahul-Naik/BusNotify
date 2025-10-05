@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Layout from '../../components/feature/Layout';
+import Header from '../../components/feature/Header';
 
 export default function Routes() {
   const navigate = useNavigate();
@@ -73,7 +73,9 @@ export default function Routes() {
   };
 
   return (
-    <Layout className="pb-16">
+    <div className="min-h-screen bg-gray-50">
+      <Header />
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
         {/* Page Header */}
         <div className="mb-6 sm:mb-8">
@@ -234,6 +236,6 @@ export default function Routes() {
           </div>
         </div>
       </div>
-    </Layout>
+    </div>
   );
 }

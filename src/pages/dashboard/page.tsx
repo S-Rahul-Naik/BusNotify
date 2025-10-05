@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Layout from '../../components/feature/Layout';
+import Header from '../../components/feature/Header';
 import BusMap from './components/BusMap';
 import RouteSelector from './components/RouteSelector';
 import NotificationPanel from './components/NotificationPanel';
@@ -57,7 +57,9 @@ export default function Dashboard() {
   };
 
   return (
-    <Layout className="pb-16">
+    <div className="min-h-screen bg-gray-50">
+      <Header />
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
         {/* Search Bar */}
         <div className="mb-6 sm:mb-8">
@@ -218,6 +220,6 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
-    </Layout>
+    </div>
   );
 }

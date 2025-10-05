@@ -10,7 +10,7 @@ import Schedule from "../pages/schedule/page";
 import Notifications from "../pages/notifications/page";
 import SignIn from "../pages/signin/page";
 import SignUp from "../pages/signup/page";
-import Phase4Dashboard from "../pages/phase4/index";
+import Phase4Dashboard from "../pages/phase4/page";
 
 const routes: RouteObject[] = [
   {
