@@ -66,6 +66,9 @@ class Settings(BaseSettings):
     WEATHER_API_KEY: Optional[str] = None
     TRAFFIC_API_KEY: Optional[str] = None
     
+    # OpenAI Configuration
+    OPENAI_API_KEY: Optional[str] = None
+    
     # Machine Learning
     MODEL_UPDATE_INTERVAL_HOURS: int = 24
     PREDICTION_CONFIDENCE_THRESHOLD: float = 0.7
